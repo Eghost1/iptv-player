@@ -1,0 +1,18 @@
+{
+  "name": "iptv-player",
+  "version": "1.0.0",
+  "description": "Reproductor IPTV local - Deportes & Chile",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "hls.js": "^1.6.15",
+    "vite": "^7.3.1"
+  }
+}
