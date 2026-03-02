@@ -60,8 +60,34 @@ const ROJADIRECTA_URL = 'https://api.allorigins.win/raw?url=https://www.rojadire
 const PLAYLISTS = {
   sports: 'https://iptv-org.github.io/iptv/categories/sports.m3u',
   chile: 'https://iptv-org.github.io/iptv/countries/cl.m3u',
-  Chile2: 'https://m3u.cl/lista/CL.m3u'
+  Chile2: 'https://m3u.cl/lista/CL.m3u',
+  tnt_sports_chile: '', // Deprecated placeholder or empty
+  c1: 'https://pastebin.com/raw/wCnH-1-d3port3s-CDX2',
+  c2: 'https://pastebin.com/raw/sfym-nbaa–2SDK',
+  c3: 'https://pastebin.com/raw/K-futbol211VtaQaMC',
+  c4: 'http://bit.ly/futbol1onlin33-applil',
+  c5: 'http://bit.ly/deportes1general33-applil',
+  c6: 'http://bit.ly/Deportes1Ymasyaj12'
 };
+
+// ============================================
+// Cookie Helpers
+// ============================================
+function setCookie(name, value, days = 365) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value || ""}; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
+}
+
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
 
 const state = {
   channels: [],
@@ -70,7 +96,8 @@ const state = {
   customChannels: processedCustomChannels,
   currentFilter: 'sports',
   currentChannel: null,
-  favorites: JSON.parse(localStorage.getItem('iptv-favorites') || '[]'),
+  // Intentamos recuperar desde cookie primero, y si no, caemos de vuelta al localStorage antiguo como fallback
+  favorites: JSON.parse(getCookie('iptv-favorites') || localStorage.getItem('iptv-favorites') || '[]'),
   hls: null,
 };
 
@@ -139,8 +166,14 @@ function parseM3U(text, source) {
 // Fetch Channels
 // ============================================
 async function fetchPlaylist(url, source) {
+  if (!url) return [];
   try {
-    const res = await fetch(url);
+    // Si la URL es HTTP insegura o de un dominio con posibles bloqueos CORS (como pastebin, m3u.cl o acortadores bit.ly)
+    // pasamos la petición de forma segura a través del proxy para evitar errores Mixed Blocked Content.
+    const isCorsProblematic = url.startsWith('http://') || url.includes('pastebin.com') || url.includes('m3u.cl') || url.includes('bit.ly');
+    const targetUrl = isCorsProblematic ? `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` : url;
+
+    const res = await fetch(targetUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     return parseM3U(text, source);
@@ -177,17 +210,27 @@ async function loadChannels() {
     }
   };
 
-  const [sports, chile, chile2, tnt_sports_chile, la14hdJson, libreHtml, rojaHtml] = await Promise.all([
+  const [
+    sports, chile, chile2, tnt_sports_chile,
+    c1, c2, c3, c4, c5, c6,
+    la14hdJson, libreHtml, rojaHtml
+  ] = await Promise.all([
     fetchPlaylist(PLAYLISTS.sports, 'sports'),
     fetchPlaylist(PLAYLISTS.chile, 'chile'),
     fetchPlaylist(PLAYLISTS.Chile2, 'chile2'),
     fetchPlaylist(PLAYLISTS.tnt_sports_chile, 'tnt_sports_chile'),
+    fetchPlaylist(PLAYLISTS.c1, 'sports'),
+    fetchPlaylist(PLAYLISTS.c2, 'sports'),
+    fetchPlaylist(PLAYLISTS.c3, 'sports'),
+    fetchPlaylist(PLAYLISTS.c4, 'sports'),
+    fetchPlaylist(PLAYLISTS.c5, 'sports'),
+    fetchPlaylist(PLAYLISTS.c6, 'sports'),
     fetchJson(LA14HD_JSON_URL),
     fetchText(LIBRE_AGENDA_URL),
     fetchText(ROJADIRECTA_URL)
   ]);
 
-  state.sportsChannels = sports;
+  state.sportsChannels = [...sports, ...c1, ...c2, ...c3, ...c4, ...c5, ...c6];
   state.chileChannels = chile;
   state.Chile2Channels = chile2;
   state.tnt_sports_chileChannels = tnt_sports_chile;
@@ -221,47 +264,47 @@ async function loadChannels() {
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(libreHtml, 'text/html');
-      
+
       // Each match in librefutboltv agenda usually under li elements
       // The parent typically contains the match name text, then nested <ul> for links
-      const events = doc.querySelectorAll('li'); 
+      const events = doc.querySelectorAll('li');
       events.forEach(eventLi => {
         // Obtenemos el texto directo que podría ser el nombre del partido
         let eventName = "";
         Array.from(eventLi.childNodes).forEach(node => {
-            if(node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") {
-                eventName += node.textContent.trim() + " ";
-            }
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") {
+            eventName += node.textContent.trim() + " ";
+          }
         });
         eventName = eventName.trim() || 'Evento LibreFutbol';
 
         const links = eventLi.querySelectorAll('a');
         links.forEach(link => {
-            const href = link.getAttribute('href') || '';
-            let channelName = link.textContent.trim().replace('Calidad 720p', '').replace('Calidad 1080p', '').trim();
-            if(!channelName) channelName = eventName; // Fallback
-            
-            // Extract base64 part of '?r=' parameter
-            const rMatch = href.match(/\?r=([A-Za-z0-9+/=]+)/);
-            if (rMatch && rMatch[1]) {
-                try {
-                    const decodedUrl = atob(rMatch[1]);
-                    // Only add if it looks like a valid URL or iframe path
-                    if(decodedUrl.includes('http') || decodedUrl.includes('.php') || decodedUrl.includes('.html')) {
-                       libreChannels.push({
-                        name: `${channelName} (${eventName}) [Libre]`,
-                        logo: '',
-                        group: 'LibreFutbolTV',
-                        url: decodedUrl,
-                        iframe: true,
-                        source: 'custom',
-                        uid: `libre-${channelName}-${decodedUrl}`.replace(/\s+/g, '-').toLowerCase()
-                        });
-                    }
-                } catch (e) {
-                    console.warn("Failed to decode Libre URL:", rMatch[1]);
-                }
+          const href = link.getAttribute('href') || '';
+          let channelName = link.textContent.trim().replace('Calidad 720p', '').replace('Calidad 1080p', '').trim();
+          if (!channelName) channelName = eventName; // Fallback
+
+          // Extract base64 part of '?r=' parameter
+          const rMatch = href.match(/\?r=([A-Za-z0-9+/=]+)/);
+          if (rMatch && rMatch[1]) {
+            try {
+              const decodedUrl = atob(rMatch[1]);
+              // Only add if it looks like a valid URL or iframe path
+              if (decodedUrl.includes('http') || decodedUrl.includes('.php') || decodedUrl.includes('.html')) {
+                libreChannels.push({
+                  name: `${channelName} (${eventName}) [Libre]`,
+                  logo: '',
+                  group: 'LibreFutbolTV',
+                  url: decodedUrl,
+                  iframe: true,
+                  source: 'custom',
+                  uid: `libre-${channelName}-${decodedUrl}`.replace(/\s+/g, '-').toLowerCase()
+                });
+              }
+            } catch (e) {
+              console.warn("Failed to decode Libre URL:", rMatch[1]);
             }
+          }
         });
       });
     } catch (e) {
@@ -271,52 +314,52 @@ async function loadChannels() {
 
   // Process RojaDirectaTV channels
   let rojaChannels = [];
-  if(rojaHtml) {
-      try {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(rojaHtml, 'text/html');
-          
-          // En RojaDirectaTV, los eventos suelen estar en listas o etiquetas <li> directas con enlaces dentro
-          // Ajustaremos un selector general para atrapar listas de links similares a LibreFutbol
-          const events = doc.querySelectorAll('li');
-          
-          events.forEach(eventLi => {
-             // El nombre del partido a menudo viene precedido en texto, o en un tag strong/span
-             let eventName = eventLi.textContent.split('\n')[0].trim() || 'Evento RojaDirecta';
-             // Limpiar texto para no incluir todo el bloque
-             eventName = eventName.replace(/Canal.*/g, '').trim();
+  if (rojaHtml) {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rojaHtml, 'text/html');
 
-             const links = eventLi.querySelectorAll('a');
-             links.forEach((link, idx) => {
-                 const href = link.getAttribute('href') || '';
-                 const channelName = link.textContent.trim() || `Opcion ${idx+1}`;
-                 
-                 // RojaDirecta suele usar urls directas a sus players locales, pero vamos a intentar resolver si es absoluta o no
-                 let finalUrl = href;
-                 if(href.startsWith('/')) {
-                     finalUrl = 'https://www.rojadirectatv3.pl' + href;
-                 } else if(!href.startsWith('http')) {
-                      finalUrl = 'https://www.rojadirectatv3.pl/' + href;
-                 }
-                 
-                 // Evitar anchors vacíos o a otras paginas no utiles
-                 if(href && !href.includes('agenda.php') && !href.includes('legal.php')) {
-                    rojaChannels.push({
-                        name: `${channelName} (${eventName}) [Roja]`,
-                        logo: '',
-                        group: 'RojaDirectaTV',
-                        url: finalUrl,
-                        iframe: true, // Asumimos que podemos i-framear la subpagina de player directo de roja
-                        source: 'custom',
-                        uid: `roja-${channelName}-${finalUrl}`.replace(/\s+/g, '-').toLowerCase()
-                    });
-                 }
-             });
-          });
+      // En RojaDirectaTV, los eventos suelen estar en listas o etiquetas <li> directas con enlaces dentro
+      // Ajustaremos un selector general para atrapar listas de links similares a LibreFutbol
+      const events = doc.querySelectorAll('li');
 
-      } catch (e) {
-          console.error("Error parsing RojaDirecta HTML", e);
-      }
+      events.forEach(eventLi => {
+        // El nombre del partido a menudo viene precedido en texto, o en un tag strong/span
+        let eventName = eventLi.textContent.split('\n')[0].trim() || 'Evento RojaDirecta';
+        // Limpiar texto para no incluir todo el bloque
+        eventName = eventName.replace(/Canal.*/g, '').trim();
+
+        const links = eventLi.querySelectorAll('a');
+        links.forEach((link, idx) => {
+          const href = link.getAttribute('href') || '';
+          const channelName = link.textContent.trim() || `Opcion ${idx + 1}`;
+
+          // RojaDirecta suele usar urls directas a sus players locales, pero vamos a intentar resolver si es absoluta o no
+          let finalUrl = href;
+          if (href.startsWith('/')) {
+            finalUrl = 'https://www.rojadirectatv3.pl' + href;
+          } else if (!href.startsWith('http')) {
+            finalUrl = 'https://www.rojadirectatv3.pl/' + href;
+          }
+
+          // Evitar anchors vacíos o a otras paginas no utiles
+          if (href && !href.includes('agenda.php') && !href.includes('legal.php')) {
+            rojaChannels.push({
+              name: `${channelName} (${eventName}) [Roja]`,
+              logo: '',
+              group: 'RojaDirectaTV',
+              url: finalUrl,
+              iframe: true, // Asumimos que podemos i-framear la subpagina de player directo de roja
+              source: 'custom',
+              uid: `roja-${channelName}-${finalUrl}`.replace(/\s+/g, '-').toLowerCase()
+            });
+          }
+        });
+      });
+
+    } catch (e) {
+      console.error("Error parsing RojaDirecta HTML", e);
+    }
   }
 
   // Merge the dynamically loaded custom channels explicitly into state
@@ -542,7 +585,12 @@ function toggleFavorite(uid) {
   } else {
     state.favorites.push(uid);
   }
+
+  // Guardamos en cookies
+  setCookie('iptv-favorites', JSON.stringify(state.favorites), 365);
+  // De manera redundante actualizamos el localStorage para retro-compatibilidad
   localStorage.setItem('iptv-favorites', JSON.stringify(state.favorites));
+
   updateFavoriteButton();
   renderChannels();
 }
