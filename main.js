@@ -1,8 +1,11 @@
-import Hls from 'hls.js';
+// HLS is loaded via CDN in index.html
 
 // ============================================
-// Constants & State
+// Constants & DOM Elements
 // ============================================
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
 // ============================================
 // ➕ AGREGA TUS CANALES MANUALMENTE AQUÍ
 // ============================================
@@ -94,21 +97,16 @@ const state = {
   sportsChannels: [],
   chileChannels: [],
   customChannels: processedCustomChannels,
-  currentFilter: 'sports',
+  currentFilter: 'all',
+  categories: [],
   currentChannel: null,
-  // Intentamos recuperar desde cookie primero, y si no, caemos de vuelta al localStorage antiguo como fallback
   favorites: JSON.parse(getCookie('iptv-favorites') || localStorage.getItem('iptv-favorites') || '[]'),
   hls: null,
 };
 
-// ============================================
-// DOM Elements
-// ============================================
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => document.querySelectorAll(sel);
-
 const els = {
   channelList: $('#channel-list'),
+  categoryFilters: $('#category-filters'),
   loading: $('#loading'),
   searchInput: $('#search-input'),
   videoPlayer: $('#video-player'),
@@ -145,7 +143,7 @@ function parseM3U(text, source) {
       currentInfo = {
         name: nameMatch ? nameMatch[1].trim() : 'Sin nombre',
         logo: logoMatch ? logoMatch[1] : '',
-        group: groupMatch ? groupMatch[1] : '',
+        group: groupMatch ? groupMatch[1].trim() : 'Sin Categoría',
         id: idMatch ? idMatch[1] : '',
         source,
       };
@@ -168,8 +166,6 @@ function parseM3U(text, source) {
 async function fetchPlaylist(url, source) {
   if (!url) return [];
   try {
-    // Si la URL es HTTP insegura o de un dominio con posibles bloqueos CORS (como pastebin, m3u.cl o acortadores bit.ly)
-    // pasamos la petición de forma segura a través del proxy para evitar errores Mixed Blocked Content.
     const isCorsProblematic = url.startsWith('http://') || url.includes('pastebin.com') || url.includes('m3u.cl') || url.includes('bit.ly');
     const targetUrl = isCorsProblematic ? `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` : url;
 
@@ -186,26 +182,22 @@ async function fetchPlaylist(url, source) {
 async function loadChannels() {
   els.loading.style.display = 'flex';
 
-  // Helper to fetch json
   const fetchJson = async (url) => {
     try {
       const res = await fetch(url);
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
-      console.warn("Failed to fetch JSON:", url);
       return null;
     }
   };
 
-  // Helper to fetch HTML text
   const fetchText = async (url) => {
     try {
       const res = await fetch(url);
       if (!res.ok) return null;
       return await res.text();
     } catch (e) {
-      console.warn("Failed to fetch text:", url);
       return null;
     }
   };
@@ -235,7 +227,6 @@ async function loadChannels() {
   state.Chile2Channels = chile2;
   state.tnt_sports_chileChannels = tnt_sports_chile;
 
-  // Process la14hd dynamic channels
   let la14hdChannels = [];
   if (la14hdJson) {
     for (const group in la14hdJson) {
@@ -258,23 +249,16 @@ async function loadChannels() {
     }
   }
 
-  // Process LibreFutbolTV channels
   let libreChannels = [];
   if (libreHtml) {
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(libreHtml, 'text/html');
-
-      // Each match in librefutboltv agenda usually under li elements
-      // The parent typically contains the match name text, then nested <ul> for links
       const events = doc.querySelectorAll('li');
       events.forEach(eventLi => {
-        // Obtenemos el texto directo que podría ser el nombre del partido
         let eventName = "";
         Array.from(eventLi.childNodes).forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") {
-            eventName += node.textContent.trim() + " ";
-          }
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") eventName += node.textContent.trim() + " ";
         });
         eventName = eventName.trim() || 'Evento LibreFutbol';
 
@@ -282,14 +266,11 @@ async function loadChannels() {
         links.forEach(link => {
           const href = link.getAttribute('href') || '';
           let channelName = link.textContent.trim().replace('Calidad 720p', '').replace('Calidad 1080p', '').trim();
-          if (!channelName) channelName = eventName; // Fallback
-
-          // Extract base64 part of '?r=' parameter
+          if (!channelName) channelName = eventName;
           const rMatch = href.match(/\?r=([A-Za-z0-9+/=]+)/);
           if (rMatch && rMatch[1]) {
             try {
               const decodedUrl = atob(rMatch[1]);
-              // Only add if it looks like a valid URL or iframe path
               if (decodedUrl.includes('http') || decodedUrl.includes('.php') || decodedUrl.includes('.html')) {
                 libreChannels.push({
                   name: `${channelName} (${eventName}) [Libre]`,
@@ -301,159 +282,168 @@ async function loadChannels() {
                   uid: `libre-${channelName}-${decodedUrl}`.replace(/\s+/g, '-').toLowerCase()
                 });
               }
-            } catch (e) {
-              console.warn("Failed to decode Libre URL:", rMatch[1]);
-            }
+            } catch (e) { }
           }
         });
       });
-    } catch (e) {
-      console.error("Error parsing Libre HTML", e);
-    }
+    } catch (e) { }
   }
 
-  // Process RojaDirectaTV channels
   let rojaChannels = [];
   if (rojaHtml) {
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(rojaHtml, 'text/html');
-
-      // En RojaDirectaTV, los eventos suelen estar en listas o etiquetas <li> directas con enlaces dentro
-      // Ajustaremos un selector general para atrapar listas de links similares a LibreFutbol
       const events = doc.querySelectorAll('li');
 
       events.forEach(eventLi => {
-        // El nombre del partido a menudo viene precedido en texto, o en un tag strong/span
         let eventName = eventLi.textContent.split('\n')[0].trim() || 'Evento RojaDirecta';
-        // Limpiar texto para no incluir todo el bloque
         eventName = eventName.replace(/Canal.*/g, '').trim();
 
         const links = eventLi.querySelectorAll('a');
         links.forEach((link, idx) => {
           const href = link.getAttribute('href') || '';
           const channelName = link.textContent.trim() || `Opcion ${idx + 1}`;
-
-          // RojaDirecta suele usar urls directas a sus players locales, pero vamos a intentar resolver si es absoluta o no
           let finalUrl = href;
-          if (href.startsWith('/')) {
-            finalUrl = 'https://www.rojadirectatv3.pl' + href;
-          } else if (!href.startsWith('http')) {
-            finalUrl = 'https://www.rojadirectatv3.pl/' + href;
-          }
+          if (href.startsWith('/')) finalUrl = 'https://www.rojadirectatv3.pl' + href;
+          else if (!href.startsWith('http')) finalUrl = 'https://www.rojadirectatv3.pl/' + href;
 
-          // Evitar anchors vacíos o a otras paginas no utiles
           if (href && !href.includes('agenda.php') && !href.includes('legal.php')) {
             rojaChannels.push({
               name: `${channelName} (${eventName}) [Roja]`,
               logo: '',
               group: 'RojaDirectaTV',
               url: finalUrl,
-              iframe: true, // Asumimos que podemos i-framear la subpagina de player directo de roja
+              iframe: true,
               source: 'custom',
               uid: `roja-${channelName}-${finalUrl}`.replace(/\s+/g, '-').toLowerCase()
             });
           }
         });
       });
-
-    } catch (e) {
-      console.error("Error parsing RojaDirecta HTML", e);
-    }
+    } catch (e) { }
   }
 
-  // Merge the dynamically loaded custom channels explicitly into state
   state.customChannels = [...processedCustomChannels, ...la14hdChannels, ...libreChannels, ...rojaChannels];
 
-  // Merge & deduplicate
   const allMap = new Map();
-  [...sports, ...chile, ...chile2, ...tnt_sports_chile, ...state.customChannels].forEach((ch) => {
+  [...state.sportsChannels, ...chile, ...chile2, ...tnt_sports_chile, ...state.customChannels].forEach((ch) => {
     if (!allMap.has(ch.uid)) {
+      if (!ch.group || ch.group.trim() === '') ch.group = 'Otros';
       allMap.set(ch.uid, ch);
     }
   });
   state.channels = Array.from(allMap.values());
 
-  // Update stats
-  els.countSports.textContent = sports.length;
+  els.countSports.textContent = state.sportsChannels.length;
   els.countChile.textContent = chile.length;
 
+  const categories = new Set(state.channels.map(ch => ch.group));
+  state.categories = Array.from(categories).sort();
+
   els.loading.style.display = 'none';
+  renderCategoryPills();
   renderChannels();
 }
 
 // ============================================
-// Render Channels
+// Render UI
 // ============================================
-function getFilteredChannels() {
-  let channels;
-  switch (state.currentFilter) {
-    case 'sports':
-      channels = state.sportsChannels;
-      break;
-    case 'chile':
-      channels = state.chileChannels;
-      break;
-    case 'custom':
-      channels = state.customChannels;
-      break;
-    case 'favorites':
-      channels = state.channels.filter((ch) => state.favorites.includes(ch.uid));
-      break;
-    default:
-      channels = state.channels;
+function renderCategoryPills() {
+  let html = `<button class="category-pill ${state.currentFilter === 'all' ? 'active' : ''}" data-group="all">Todo</button>`;
+  html += `<button class="category-pill ${state.currentFilter === 'favorites' ? 'active' : ''}" data-group="favorites">⭐ Favoritos</button>`;
+
+  const priorityGroups = ['Deportes', 'RojaDirectaTV', 'LibreFutbolTV'];
+
+  priorityGroups.forEach(g => {
+    if (state.categories.includes(g)) {
+      html += `<button class="category-pill ${state.currentFilter === g ? 'active' : ''}" data-group="${g}">${g}</button>`;
+    }
+  });
+
+  state.categories.forEach(g => {
+    if (!priorityGroups.includes(g) && g.length < 25) {
+      html += `<button class="category-pill ${state.currentFilter === g ? 'active' : ''}" data-group="${g}">${g}</button>`;
+    }
+  });
+
+  if (els.categoryFilters) {
+    els.categoryFilters.innerHTML = html;
+  }
+}
+
+function getFilteredChannelsGrouped() {
+  let filtered = state.channels;
+
+  if (state.currentFilter === 'favorites') {
+    filtered = filtered.filter(ch => state.favorites.includes(ch.uid));
+  } else if (state.currentFilter !== 'all') {
+    filtered = filtered.filter(ch => ch.group === state.currentFilter);
   }
 
   const query = els.searchInput.value.toLowerCase().trim();
   if (query) {
-    channels = channels.filter(
-      (ch) =>
-        ch.name.toLowerCase().includes(query) ||
-        ch.group.toLowerCase().includes(query)
+    filtered = filtered.filter(ch =>
+      ch.name.toLowerCase().includes(query) || ch.group.toLowerCase().includes(query)
     );
   }
 
-  return channels;
+  const grouped = {};
+  filtered.forEach(ch => {
+    if (!grouped[ch.group]) grouped[ch.group] = [];
+    grouped[ch.group].push(ch);
+  });
+
+  return grouped;
 }
 
 function renderChannels() {
-  const channels = getFilteredChannels();
+  const grouped = getFilteredChannelsGrouped();
 
-  if (channels.length === 0) {
+  if (Object.keys(grouped).length === 0) {
     els.channelList.innerHTML = `
       <div class="no-results">
-        <div class="no-results__icon">🔍</div>
-        <p>No se encontraron canales</p>
+        <div class="no-results__icon">📂</div>
+        <p>No se encontraron canales en esta categoría</p>
       </div>
     `;
     return;
   }
 
-  const html = channels
-    .map((ch) => {
+  let html = '';
+  let animDelay = 0;
+
+  for (const [group, channels] of Object.entries(grouped)) {
+    if (state.currentFilter === 'all' || state.currentFilter === 'favorites' || els.searchInput.value.trim() !== '') {
+      html += `<h3 class="category-group-title">${group}</h3>`;
+    }
+
+    html += `<div class="category-group-grid">`;
+    channels.forEach((ch) => {
       const isFav = state.favorites.includes(ch.uid);
       const isActive = state.currentChannel?.uid === ch.uid;
       const initial = ch.name.charAt(0).toUpperCase();
-      const isChile = ch.source === 'chile';
 
-      return `
-        <div class="channel-card ${isActive ? 'active' : ''}" data-uid="${ch.uid}">
+      animDelay += 0.02;
+      const delayStyle = `animation-delay: ${Math.min(animDelay, 0.5)}s;`;
+
+      html += `
+        <div class="channel-card ${isActive ? 'active' : ''}" data-uid="${ch.uid}" style="${delayStyle}">
           ${ch.logo
           ? `<img class="channel-card__logo" src="${ch.logo}" alt="${ch.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="channel-card__logo-placeholder" style="display:none;">${initial}</div>`
           : `<div class="channel-card__logo-placeholder">${initial}</div>`
         }
           <div class="channel-card__info">
             <div class="channel-card__name" title="${ch.name}">${ch.name}</div>
-            <div class="channel-card__group">${ch.group || ch.source}</div>
           </div>
-          ${isChile ? '<span class="channel-card__tag channel-card__tag--chile">CL</span>' : ''}
           <button class="channel-card__fav ${isFav ? 'is-fav' : ''}" data-fav-uid="${ch.uid}" title="${isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}">
             ${isFav ? '★' : '☆'}
           </button>
         </div>
       `;
-    })
-    .join('');
+    });
+    html += `</div>`;
+  }
 
   els.channelList.innerHTML = html;
 }
@@ -464,7 +454,6 @@ function renderChannels() {
 function playChannel(channel) {
   state.currentChannel = channel;
 
-  // Reset UI
   els.playerEmpty.style.display = 'none';
   els.playerError.style.display = 'none';
   els.nowPlaying.style.display = 'flex';
@@ -484,7 +473,6 @@ function playChannel(channel) {
     els.videoPlayer.classList.add('visible');
   }
 
-  // Update now playing
   els.nowPlayingName.textContent = channel.name;
   els.nowPlayingGroup.textContent = channel.group || channel.source;
   if (channel.logo) {
@@ -494,78 +482,51 @@ function playChannel(channel) {
     els.nowPlayingLogo.style.display = 'none';
   }
 
-  // Update favorite button
   updateFavoriteButton();
 
-  // Destroy previous HLS instance
+  if (window.innerWidth <= 1024) {
+    els.playerContainer.scrollIntoView({ behavior: 'smooth' });
+  }
+
   if (state.hls) {
     state.hls.destroy();
     state.hls = null;
   }
 
-  const url = channel.url;
-  const video = els.videoPlayer;
-
-  // Skip video player setup if using iframe
   if (isIframe) {
-    // Update active card
     renderChannels();
     return;
   }
 
-  // Determine how to play
+  const url = channel.url;
+  const video = els.videoPlayer;
+
   if (url.includes('.m3u8') || url.includes('m3u8')) {
     if (Hls.isSupported()) {
       const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
+        enableWorker: true, lowLatencyMode: true, maxBufferLength: 30, maxMaxBufferLength: 60,
       });
       state.hls = hls;
-
       hls.loadSource(url);
       hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => { });
-      });
-
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => { }));
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              console.error('Network error, trying to recover...');
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              console.error('Media error, trying to recover...');
-              hls.recoverMediaError();
-              break;
-            default:
-              showPlayError();
-              break;
-          }
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+          else showPlayError();
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari native HLS
       video.src = url;
       video.play().catch(() => { });
-    } else {
-      showPlayError();
-    }
+    } else showPlayError();
   } else {
-    // Direct stream (MP4, etc.)
     video.src = url;
     video.play().catch(() => { });
-
-    video.onerror = () => {
-      showPlayError();
-    };
+    video.onerror = () => showPlayError();
   }
 
-  // Update active card
   renderChannels();
 }
 
@@ -580,15 +541,10 @@ function showPlayError() {
 // ============================================
 function toggleFavorite(uid) {
   const idx = state.favorites.indexOf(uid);
-  if (idx >= 0) {
-    state.favorites.splice(idx, 1);
-  } else {
-    state.favorites.push(uid);
-  }
+  if (idx >= 0) state.favorites.splice(idx, 1);
+  else state.favorites.push(uid);
 
-  // Guardamos en cookies
   setCookie('iptv-favorites', JSON.stringify(state.favorites), 365);
-  // De manera redundante actualizamos el localStorage para retro-compatibilidad
   localStorage.setItem('iptv-favorites', JSON.stringify(state.favorites));
 
   updateFavoriteButton();
@@ -605,17 +561,13 @@ function updateFavoriteButton() {
 // Event Listeners
 // ============================================
 function setupListeners() {
-  // Channel list click delegation
   els.channelList.addEventListener('click', (e) => {
-    // Check favorite button
     const favBtn = e.target.closest('[data-fav-uid]');
     if (favBtn) {
       e.stopPropagation();
       toggleFavorite(favBtn.dataset.favUid);
       return;
     }
-
-    // Check channel card
     const card = e.target.closest('.channel-card');
     if (card) {
       const uid = card.dataset.uid;
@@ -624,17 +576,18 @@ function setupListeners() {
     }
   });
 
-  // Filter tabs
-  $$('.filter-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      $$('.filter-tab').forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      state.currentFilter = tab.dataset.filter;
-      renderChannels();
+  if (els.categoryFilters) {
+    els.categoryFilters.addEventListener('click', (e) => {
+      const pill = e.target.closest('.category-pill');
+      if (pill) {
+        state.currentFilter = pill.dataset.group;
+        renderCategoryPills();
+        renderChannels();
+        els.channelList.scrollTop = 0;
+      }
     });
-  });
+  }
 
-  // Search
   let searchTimeout;
   els.searchInput.addEventListener('input', () => {
     clearTimeout(searchTimeout);
@@ -643,27 +596,23 @@ function setupListeners() {
     }, 200);
   });
 
-  // Now playing favorite button
   els.btnFavorite.addEventListener('click', () => {
-    if (state.currentChannel) {
-      toggleFavorite(state.currentChannel.uid);
-    }
-  });
-
-  // Keyboard shortcut: Escape to clear search
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      els.searchInput.value = '';
-      renderChannels();
-    }
-    // Ctrl+K / Cmd+K to focus search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-      e.preventDefault();
-      els.searchInput.focus();
-    }
+    if (state.currentChannel) toggleFavorite(state.currentChannel.uid);
   });
 }
 
+// Keyboard shortcut: Escape to clear search
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    els.searchInput.value = '';
+    renderChannels();
+  }
+  // Ctrl+K / Cmd+K to focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    els.searchInput.focus();
+  }
+});
 // ============================================
 // Initialize
 // ============================================
