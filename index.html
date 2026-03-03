@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/iptv-player/assets/index-DEtCtsuL.js"></script>
-  <link rel="stylesheet" crossorigin href="/iptv-player/assets/index-BxPS1jbY.css">
+  <script type="module" crossorigin src="/iptv-player/assets/index-FnreSVV9.js"></script>
+  <link rel="stylesheet" crossorigin href="/iptv-player/assets/index-CGuckhUS.css">
 </head>
 <body>
   <div id="app">
@@ -18,7 +18,7 @@
       <div class="header__brand">
         <div class="header__logo">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="url(#grad1)" />
+            <rect width="32" height="32" rx="10" fill="url(#grad1)" />
             <path d="M10 12L14 16L10 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M16 12H22" stroke="white" stroke-width="2" stroke-linecap="round"/>
             <path d="M16 16H22" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -31,98 +31,77 @@
             </defs>
           </svg>
         </div>
-        <h1 class="header__title">IPTV <span class="header__title-accent">Player</span></h1>
+        <h1 class="header__title">IPTV <span class="header__title-accent">Deportes</span></h1>
       </div>
       <div class="header__stats">
-        <div class="stat-badge" id="stats-sports">
-          <span class="stat-badge__icon">⚽</span>
-          <span class="stat-badge__label">Deportes</span>
-          <span class="stat-badge__count" id="count-sports">0</span>
-        </div>
-        <div class="stat-badge" id="stats-chile">
-          <span class="stat-badge__icon">🇨🇱</span>
-          <span class="stat-badge__label">Chile</span>
-          <span class="stat-badge__count" id="count-chile">0</span>
-        </div>
+        <div class="stat-badge" id="stats-sports">⚽ Deportes <strong id="count-sports">0</strong></div>
+        <div class="stat-badge" id="stats-chile">🇨🇱 Chile <strong id="count-chile">0</strong></div>
       </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Layout -->
     <main class="main">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <!-- Search -->
-        <div class="search-box">
-          <svg class="search-box__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="search-input" class="search-box__input" placeholder="Buscar canal..." autocomplete="off" />
-        </div>
-
-        <!-- Filter Tabs -->
-        <div class="filter-tabs">
-          <button class="filter-tab active" data-filter="sports" id="tab-sports">
-            <span class="filter-tab__icon">⚽</span> Deportes
-          </button>
-          <button class="filter-tab" data-filter="chile" id="tab-chile">
-            <span class="filter-tab__icon">🇨🇱</span> Chile
-          </button>
-          <button class="filter-tab" data-filter="custom" id="tab-custom">
-            <span class="filter-tab__icon">➕</span> Mis Canales
-          </button>
-          <button class="filter-tab" data-filter="favorites" id="tab-favorites">
-            <span class="filter-tab__icon">⭐</span> Favoritos
-          </button>
-          <button class="filter-tab" data-filter="all" id="tab-all">
-            <span class="filter-tab__icon">📺</span> Todos
-          </button>
-        </div>
-
-        <!-- Channel List -->
-        <div class="channel-list" id="channel-list">
-          <div class="loading" id="loading">
-            <div class="loading__spinner"></div>
-            <p class="loading__text">Cargando canales...</p>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Player Area -->
+      
+      <!-- Player Area (Now takes priority on mobile) -->
       <section class="player-area">
         <div class="player-container" id="player-container">
-          <!-- Empty state -->
           <div class="player-empty" id="player-empty">
-            <div class="player-empty__icon">📡</div>
+            <div class="player-empty__icon">🎥</div>
             <h2 class="player-empty__title">Selecciona un canal</h2>
-            <p class="player-empty__desc">Elige un canal de la lista para comenzar a ver</p>
+            <p class="player-empty__desc">Tu emisión comenzará aquí</p>
           </div>
-          <!-- Video Player (HLS/Native) -->
           <video id="video-player" class="video-player" controls playsinline></video>
-          <!-- Iframe Player (Embedded streams) -->
           <iframe id="iframe-player" class="video-player iframe-player" allowfullscreen style="display:none; width:100%; height:100%; border:none;"></iframe>
-          <!-- Error state -->
           <div class="player-error" id="player-error" style="display:none;">
             <div class="player-error__icon">📡</div>
-            <h3 class="player-error__title">Canal no disponible</h3>
-            <p class="player-error__desc">Este stream no está disponible en este momento. Prueba otro canal.</p>
+            <h3 class="player-error__title">Transmisión Caída</h3>
+            <p class="player-error__desc">Intenta seleccionar otra fuente o canal alternativo.</p>
           </div>
         </div>
 
-        <!-- Now Playing Info -->
+        <!-- Bento Info Card -->
         <div class="now-playing" id="now-playing" style="display:none;">
           <img id="now-playing-logo" class="now-playing__logo" src="" alt="" />
           <div class="now-playing__info">
             <h2 id="now-playing-name" class="now-playing__name"></h2>
             <p id="now-playing-group" class="now-playing__group"></p>
           </div>
-          <button id="btn-favorite" class="btn-favorite" title="Agregar a favoritos">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button id="btn-favorite" class="btn-favorite" title="Favorito">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
           </button>
         </div>
       </section>
+
+      <!-- Sidebar Area (Sheet on mobile) -->
+      <aside class="sidebar">
+        <!-- Search -->
+        <div class="search-box">
+          <svg class="search-box__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="search-input" class="search-box__input" placeholder="Buscar canal, equipo, evento..." autocomplete="off" />
+        </div>
+
+        <!-- Dynamic Category Filter Pills -->
+        <div class="category-filters-container">
+          <div class="category-filters" id="category-filters">
+            <!-- Will be populated dynamically by JS -->
+            <button class="category-pill active" data-group="all">Todo</button>
+            <button class="category-pill" data-group="favorites">⭐ Favoritos</button>
+          </div>
+        </div>
+
+        <!-- Channel Display Grid -->
+        <div class="channel-list" id="channel-list">
+          <div class="loading" id="loading">
+            <div class="loading__spinner"></div>
+            <p class="loading__text">Analizando fuentes m3u8 y webs...</p>
+          </div>
+        </div>
+      </aside>
+      
     </main>
   </div>
 
