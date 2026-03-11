@@ -10,64 +10,166 @@ const $$ = (sel) => document.querySelectorAll(sel);
 // ➕ AGREGA TUS CANALES MANUALMENTE AQUÍ
 // ============================================
 const CUSTOM_CHANNELS = [
-  // Descomenta y edita este ejemplo para agregar tu propio canal:
   {
     name: 'TNT Sports2',
-    logo: 'https://ejemplo.com/tnt-logo.png', // opcional
-    group: 'Deportes', // opcional
-    url: 'https://aw1wcm92zq.fubohd.com:443/tntsportschile/mono.m3u8?token=69cb908490ed4fe8f625a9506a97cb6c71ed5a6c-f4-1772495840-1772477840' // URL de tu transmisión
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
+    group: 'Deportes',
+    url: 'https://aw1wcm92zq.fubohd.com:443/tntsportschile/mono.m3u8?token=69cb908490ed4fe8f625a9506a97cb6c71ed5a6c-f4-1772495840-1772477840'
   },
   {
     name: 'Disney 2 (Opcion 1 - EnvivosLatam)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Disney_Channel_logo.svg/1024px-Disney_Channel_logo.svg.png',
     group: 'Deportes',
     url: 'https://yce5o.envivoslatam.org/disney2/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=7e611ad84c777f1a659943e1ff6031115a51cd5f-f8-1773306886-1773252886'
   },
   {
     name: 'Disney 2 (Opcion 2 - Hotflix)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Disney_Channel_logo.svg/1024px-Disney_Channel_logo.svg.png',
     group: 'Deportes',
     url: 'https://smjt9q.envivoslatam.org/hotflix/disney2/index.m3u8?token=8a9117a87b3aa9d331a2ac226e224e9a4ccf0aee-0b-1773307412-1773253412&ip=181.163.94.50'
   },
+
   {
     name: 'Disney 3 (EnvivosLatam)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Disney_Channel_logo.svg/1024px-Disney_Channel_logo.svg.png',
     group: 'Deportes',
     url: 'https://wf6kt.envivoslatam.org/disney3/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=0f75bc004e896b18a3fbf21cfb576f48be430410-3d-1773307511-1773253511'
   },
   {
     name: 'Disney 4 (EnvivosLatam)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Disney_Channel_logo.svg/1024px-Disney_Channel_logo.svg.png',
     group: 'Deportes',
     url: 'https://qbk4f.envivoslatam.org/disney4/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=fa5d584815d7279798e3c7ae64501225b477ae5e-d4-1773307613-1773253613'
   },
   {
     name: 'TNT Sports Chile (El Canal Deportivo)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
     group: 'Deportes',
     url: 'https://elcanaldeportivo.com/cdf.php',
     iframe: true
   },
   {
     name: 'TNT Sports Chile (Rereyano)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
     group: 'Deportes',
     url: 'https://rereyano.ru/player/3/83',
     iframe: true
   },
   {
     name: 'TNT Sports Chile (We Live Sports)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
     group: 'Deportes',
     url: 'https://welivesports.shop/embed/tntsportchile.php',
     iframe: true
   },
   {
     name: 'TNT Sports Chile (La14HD)',
-    logo: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
     group: 'Deportes',
     url: 'https://la14hd.com/vivo/canal.php?stream=tntsportschile',
     iframe: true
+  },
+  {
+    name: 'TyC Sports (Opción 1)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Tyc_sports_logo_%282020%29.svg/1024px-Tyc_sports_logo_%282020%29.svg.png',
+    group: 'Deportes',
+    url: 'https://tk0hz.envivoslatam.org/tycsports/index.m3u8?token=17a7c31f5eaa26fb0a78543a6692e6917b39dde4-c2-1773308253-1773254253&ip=181.163.94.50'
+  },
+  {
+    name: 'TyC Sports (Opción 2)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Tyc_sports_logo_%282020%29.svg/1024px-Tyc_sports_logo_%282020%29.svg.png',
+    group: 'Deportes',
+    url: 'https://tk0hz.envivoslatam.org/tycsports/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=17a7c31f5eaa26fb0a78543a6692e6917b39dde4-c2-1773308253-1773254253'
+  },
+  {
+    name: 'TyC Sports (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Tyc_sports_logo_%282020%29.svg/1024px-Tyc_sports_logo_%282020%29.svg.png',
+    group: 'Deportes',
+    url: 'https://iaw5b.envivoslatam.org/hotflix/tycsports/index.m3u8?token=17a7c31f5eaa26fb0a78543a6692e6917b39dde4-c2-1773308253-1773254253&ip=181.163.94.50'
+  },
+  {
+    name: 'TNT Sports (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
+    group: 'Deportes',
+    url: 'https://smjt9q.envivoslatam.org/hotflix/tntsports/index.m3u8?token=14c985e51f0f63e2b946ba729a7f21571604aee6-38-1773308261-1773254261&ip=181.163.94.50'
+  },
+  {
+    name: 'TNT Sports (Opción 1)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png',
+    group: 'Deportes',
+    url: 'https://smjt9q.envivoslatam.org/tntsports/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=14c985e51f0f63e2b946ba729a7f21571604aee6-38-1773308261-1773254261'
+  },
+  {
+    name: 'TV Pública (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Logo_de_la_Televisi%C3%B3n_P%C3%BAblica.svg/1024px-Logo_de_la_Televisi%C3%B3n_P%C3%BAblica.svg.png',
+    group: 'Deportes',
+    url: 'https://rci1w.envivoslatam.org/hotflix/tv_publica/index.m3u8?token=597b723b21a96de1b6bedc8c4b77992924869421-54-1773308270-1773254270&ip=181.163.94.50'
+  },
+  {
+    name: 'TUDN USA (Opción 1)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/TUDN_logo.svg/1024px-TUDN_logo.svg.png',
+    group: 'Deportes',
+    url: 'https://yce5o.envivoslatam.org/tudn_usa/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=54d68f4f078ac86e5aeb675965cb0e520950292e-80-1773308286-1773254286'
+  },
+  {
+    name: 'TUDN USA (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/TUDN_logo.svg/1024px-TUDN_logo.svg.png',
+    group: 'Deportes',
+    url: 'https://smjt9q.envivoslatam.org/hotflix/tudn_usa/index.m3u8?token=54d68f4f078ac86e5aeb675965cb0e520950292e-80-1773308286-1773254286&ip=181.163.94.50'
+  },
+  {
+    name: 'Fox Sports (Opción 1)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Fox_Sports_logo.svg/1024px-Fox_Sports_logo.svg.png',
+    group: 'Deportes',
+    url: 'https://yce5o.envivoslatam.org/foxsports/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=f9a7fbc84528d2ff1bbc1af9378a01ccf7502439-6e-1773308295-1773254295'
+  },
+  {
+    name: 'Fox Sports (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Fox_Sports_logo.svg/1024px-Fox_Sports_logo.svg.png',
+    group: 'Deportes',
+    url: 'https://wf6kt.envivoslatam.org/hotflix/foxsports/index.m3u8?token=f9a7fbc84528d2ff1bbc1af9378a01ccf7502439-6e-1773308295-1773254295&ip=181.163.94.50'
+  },
+  {
+    name: 'DSports (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/DSports.png/800px-DSports.png',
+    group: 'Deportes',
+    url: 'https://wf6kt.envivoslatam.org/hotflix/dsports/index.m3u8?token=e3881f524d77731ed02f75541a402153e85aecce-cd-1773308312-1773254312&ip=181.163.94.50'
+  },
+  {
+    name: 'DSports (Opción 1)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/DSports.png/800px-DSports.png',
+    group: 'Deportes',
+    url: 'https://iaw5b.envivoslatam.org/dsports/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=e3881f524d77731ed02f75541a402153e85aecce-cd-1773308312-1773254312'
+  },
+  {
+    name: 'ESPN Premium (Hotflix)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/ESPN_Premium_logo.png',
+    group: 'Deportes',
+    url: 'https://xky9q.envivoslatam.org/hotflix/espnpremium/index.m3u8?token=9a52c9ceae428495d3af1aaa4c348b612ba47d13-8c-1773308337-1773254337&ip=181.163.94.50'
+  },
+  {
+    name: 'ESPN Premium (Opción 1)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/ESPN_Premium_logo.png',
+    group: 'Deportes',
+    url: 'https://mze7u.envivoslatam.org/espnpremium/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=9a52c9ceae428495d3af1aaa4c348b612ba47d13-8c-1773308337-1773254337'
+  },
+  {
+    name: 'Capo Deportes 1',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://n7.sanwalyaarpya.com:1686/hls/capodeportes.m3u8?md5=lZCdQwPccVRq1uiwk4T7aA&expires=1773270577'
+  },
+  {
+    name: 'Capo Deportes 3',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://n6.sanwalyaarpya.com:1686/hls/capodeportes3.m3u8?md5=Yd9uGsqtkNXNS4yoRUXt0w&expires=1773270591'
+  },
+  {
+    name: 'Capo Deportes 2',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://n8.sanwalyaarpya.com:1686/hls/capodeportes2.m3u8?md5=BabwblkNX3K5xqCklqVYBw&expires=1773270604'
   }
 ];
 
@@ -530,8 +632,12 @@ function playChannel(channel) {
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
+        // Incrementamos el buffer para compensar pesos altísimos de segmentos en Max Quality
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
+        // Prevenimos que Hls baje de calidad si el buffer se queda corto momentaneamente
+        capLevelToPlayerSize: false,
+        abrEwmaDefaultEstimate: 5000000, // Partimos "asumiendo" una conexión veloz
         // Interceptar cada petición de video (m3u8 o ts)
         xhrSetup: function (xhr, internalUrl) {
           console.log('[Depuración HLS] Solicitando recurso:', internalUrl);
@@ -547,8 +653,28 @@ function playChannel(channel) {
       state.hls = hls;
       hls.loadSource(url);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('[Depuración HLS] Manifiesto cargado exitosamente. Iniciando reproducción...');
+      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        console.log('[Depuración HLS] Manifiesto cargado exitosamente. Seleccionando la mayor calidad...');
+        
+        // Buscar el índice del nivel de mayor calidad (basado en bitrate o resolución)
+        let maxQualityLevel = -1;
+        let highestBitrate = 0;
+        
+        if (data.levels && data.levels.length > 0) {
+           data.levels.forEach((level, index) => {
+              if (level.bitrate > highestBitrate) {
+                 highestBitrate = level.bitrate;
+                 maxQualityLevel = index;
+              }
+           });
+        }
+
+        // Forzar la calidad si encontramos múltiples niveles
+        if(maxQualityLevel > -1) {
+           console.log(`[Depuración HLS] Forzando nivel de calidad: ${maxQualityLevel} (Bitrate: ${Math.round(highestBitrate / 1000)}kbps)`);
+           hls.currentLevel = maxQualityLevel; // Deshabilita el auto-switch y fija esa calidad
+        }
+
         video.play().catch(() => { });
       });
       hls.on(Hls.Events.ERROR, (event, data) => {
