@@ -759,7 +759,7 @@ function renderChannels() {
       html += `
         <div class="channel-card ${isActive ? 'active' : ''}" data-uid="${ch.uid}" tabindex="0" role="button" aria-label="Reproducir ${ch.name}" style="${delayStyle}">
           ${ch.logo
-          ? `<img class="channel-card__logo" src="${ch.logo}" alt="${ch.name}" loading="lazy" onerror="this.outerHTML='<div class=\'channel-card__logo-placeholder\'>${initial}</div>'" />`
+          ? `<img class="channel-card__logo" src="${ch.logo}" alt="${ch.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=\'channel-card__logo-placeholder\'>${initial}</div>'" />`
           : `<div class="channel-card__logo-placeholder">${initial}</div>`
         }
           <div class="channel-card__info">

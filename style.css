@@ -289,6 +289,13 @@ h1, h2, h3 { letter-spacing: -0.03em; }
 .channel-card__info { flex: 1; min-width: 0; }
 .channel-card__name { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+.channel-card__fav { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--border-subtle); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all var(--transition-fast); z-index: 2; opacity: 0; transform: translateY(-5px); outline: none; }
+.channel-card:hover .channel-card__fav, .channel-card:focus-visible .channel-card__fav, .channel-card__fav.is-fav { opacity: 1; transform: translateY(0); }
+.channel-card__fav svg { width: 16px; height: 16px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.channel-card__fav:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-pure); }
+.channel-card__fav.is-fav { background: rgba(255, 215, 0, 0.15); border-color: rgba(255, 215, 0, 0.3); color: #ffd700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+.channel-card__fav.is-fav svg { transform: scale(1.15); filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5)); }
+
 /* Loader */
 .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; height: 100%;}
 .loading__spinner { width: 40px; height: 40px; border: 3px solid var(--border-subtle); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; }
