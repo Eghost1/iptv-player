@@ -18,6 +18,30 @@ const CUSTOM_CHANNELS = [
     url: 'https://aw1wcm92zq.fubohd.com:443/tntsportschile/mono.m3u8?token=69cb908490ed4fe8f625a9506a97cb6c71ed5a6c-f4-1772495840-1772477840' // URL de tu transmisión
   },
   {
+    name: 'Disney 2 (Opcion 1 - EnvivosLatam)',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://yce5o.envivoslatam.org/disney2/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=7e611ad84c777f1a659943e1ff6031115a51cd5f-f8-1773306886-1773252886'
+  },
+  {
+    name: 'Disney 2 (Opcion 2 - Hotflix)',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://smjt9q.envivoslatam.org/hotflix/disney2/index.m3u8?token=8a9117a87b3aa9d331a2ac226e224e9a4ccf0aee-0b-1773307412-1773253412&ip=181.163.94.50'
+  },
+  {
+    name: 'Disney 3 (EnvivosLatam)',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://wf6kt.envivoslatam.org/disney3/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=0f75bc004e896b18a3fbf21cfb576f48be430410-3d-1773307511-1773253511'
+  },
+  {
+    name: 'Disney 4 (EnvivosLatam)',
+    logo: '',
+    group: 'Deportes',
+    url: 'https://qbk4f.envivoslatam.org/disney4/tracks-v1a1/mono.m3u8?ip=181.163.94.50&token=fa5d584815d7279798e3c7ae64501225b477ae5e-d4-1773307613-1773253613'
+  },
+  {
     name: 'TNT Sports Chile (El Canal Deportivo)',
     logo: '',
     group: 'Deportes',
@@ -54,11 +78,11 @@ const processedCustomChannels = CUSTOM_CHANNELS.map(ch => ({
 }));
 
 // Added la14hd dynamic proxy (via allorigins to bypass CORS if needed, or direct)
-const LA14HD_JSON_URL = 'https://api.allorigins.win/raw?url=https://www.la14hd.com/status.json';
+const LA14HD_JSON_URL = 'https://corsproxy.io/?url=https://www.la14hd.com/status.json';
 // Added LibreFutbolTV dynamic proxy
-const LIBRE_AGENDA_URL = 'https://api.allorigins.win/raw?url=https://librefutboltv.su/home1/agenda/';
+const LIBRE_AGENDA_URL = 'https://corsproxy.io/?url=https://librefutboltv.su/home1/agenda/';
 // Added RojaDirectaTV dynamic proxy
-const ROJADIRECTA_URL = 'https://api.allorigins.win/raw?url=https://www.rojadirectatv3.pl/';
+const ROJADIRECTA_URL = 'https://corsproxy.io/?url=https://www.rojadirectatv3.pl/';
 
 const PLAYLISTS = {
   sports: 'https://iptv-org.github.io/iptv/categories/sports.m3u',
@@ -167,7 +191,7 @@ async function fetchPlaylist(url, source) {
   if (!url) return [];
   try {
     const isCorsProblematic = url.startsWith('http://') || url.includes('pastebin.com') || url.includes('m3u.cl') || url.includes('bit.ly');
-    const targetUrl = isCorsProblematic ? `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` : url;
+    const targetUrl = isCorsProblematic ? `https://corsproxy.io/?url=${encodeURIComponent(url)}` : url;
 
     const res = await fetch(targetUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -504,16 +528,40 @@ function playChannel(channel) {
   if (url.includes('.m3u8') || url.includes('m3u8')) {
     if (Hls.isSupported()) {
       const hls = new Hls({
-        enableWorker: true, lowLatencyMode: true, maxBufferLength: 30, maxMaxBufferLength: 60,
+        enableWorker: true,
+        lowLatencyMode: true,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        // Interceptar cada petición de video (m3u8 o ts)
+        xhrSetup: function (xhr, internalUrl) {
+          console.log('[Depuración HLS] Solicitando recurso:', internalUrl);
+
+          // Opcional: Si un CDN bloquea por CORS, puedes intentar forzar el proxy también para los fragmentos (.ts)
+          // Nota: corsproxy.io bloquea archivos pesados de video a veces, usar con precaución.
+          if (internalUrl.includes('.ts') || internalUrl.includes('.m3u8')) {
+            internalUrl = 'https://corsproxy.io/?url=' + encodeURIComponent(internalUrl);
+          }
+
+        }
       });
       state.hls = hls;
       hls.loadSource(url);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => { }));
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('[Depuración HLS] Manifiesto cargado exitosamente. Iniciando reproducción...');
+        video.play().catch(() => { });
+      });
       hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('[Depuración HLS ERROR]', data.type, data.details, data);
         if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
-          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            console.warn('[Depuración HLS] Error de red fatal, intentando recargar...', data.frag?.url);
+            hls.startLoad();
+          }
+          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            console.warn('[Depuración HLS] Error de medios fatal, intentando recuperar...');
+            hls.recoverMediaError();
+          }
           else showPlayError();
         }
       });

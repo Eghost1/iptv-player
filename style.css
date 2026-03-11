@@ -71,7 +71,7 @@ h1, h2, h3 { letter-spacing: -0.03em; }
 
 .header__brand { display: flex; align-items: center; gap: 16px; }
 .header__title { font-size: 1.5rem; font-weight: 800; color: var(--text-pure); text-transform: uppercase;}
-.header__title-accent { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header__title-accent { background: var(--accent-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 
 .header__stats { display: flex; gap: 12px; }
 .stat-badge {
@@ -308,7 +308,7 @@ h1, h2, h3 { letter-spacing: -0.03em; }
   .header { display: none; /* Hide header completely to maximize space */ }
   
   /* Sidebar becomes the bottom scrollable area */
-  .sidebar { width: 100%; flex: 1; padding: 16px; padding-bottom: env(safe-area-inset-bottom, 20px); }
+  .sidebar { width: 100%; flex: 1; min-height: 0; padding: 16px; padding-bottom: env(safe-area-inset-bottom, 20px); }
   .search-box { padding-bottom: 0; margin-bottom: 0; }
   .search-box__input { padding: 14px 16px 14px 44px; border-radius: 100px; background: rgba(255,255,255,0.05);}
   
