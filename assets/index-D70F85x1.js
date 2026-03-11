@@ -7,7 +7,7 @@
       </div>
     `;return}let t="",i=0;for(const[r,n]of Object.entries(e))(l.currentFilter==="all"||l.currentFilter==="favorites"||s.searchInput.value.trim()!=="")&&(t+=`<h3 class="category-group-title">${r}</h3>`),t+='<div class="category-group-grid">',n.forEach(o=>{const a=l.favorites.includes(o.uid),p=l.currentChannel?.uid===o.uid,u=o.name.charAt(0).toUpperCase();i+=.02;const f=`animation-delay: ${Math.min(i,.5)}s;`;t+=`
         <div class="channel-card ${p?"active":""}" data-uid="${o.uid}" tabindex="0" role="button" aria-label="Reproducir ${o.name}" style="${f}">
-          ${o.logo?`<img class="channel-card__logo" src="${o.logo}" alt="${o.name}" loading="lazy" onerror="this.outerHTML='<div class='channel-card__logo-placeholder'>${u}</div>'" />`:`<div class="channel-card__logo-placeholder">${u}</div>`}
+          ${o.logo?`<img class="channel-card__logo" src="${o.logo}" alt="${o.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class='channel-card__logo-placeholder'>${u}</div>'" />`:`<div class="channel-card__logo-placeholder">${u}</div>`}
           <div class="channel-card__info">
             <div class="channel-card__name" title="${o.name}">${o.name}</div>
           </div>
