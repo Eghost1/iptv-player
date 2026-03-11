@@ -186,7 +186,7 @@ h1, h2, h3 { letter-spacing: -0.03em; }
   outline: none;
   transition: var(--transition-normal);
 }
-.search-box__input:focus { border-color: var(--accent-primary); background: var(--bg-bento-hover); }
+.search-box__input:focus, .search-box__input:focus-visible { border-color: var(--accent-primary); background: var(--bg-bento-hover); outline: none; box-shadow: 0 0 10px rgba(0, 255, 170, 0.2); }
 
 /* CATEGORY PILLS (Horizontal Scroll) */
 .category-filters-container {
@@ -214,7 +214,7 @@ h1, h2, h3 { letter-spacing: -0.03em; }
   white-space: nowrap;
   transition: var(--transition-normal);
 }
-.category-pill:hover { color: var(--text-pure); border-color: rgba(255,255,255,0.2); }
+.category-pill:hover, .category-pill:focus-visible { color: var(--text-pure); border-color: var(--accent-primary); outline: none; box-shadow: 0 0 10px rgba(0, 255, 170, 0.2); }
 .category-pill.active { background: var(--text-pure); color: var(--bg-deep); border-color: transparent; }
 
 /* CHANNEL LIST (BENTO GRID STYLE) */
@@ -263,9 +263,15 @@ h1, h2, h3 { letter-spacing: -0.03em; }
   transition: var(--transition-fast);
   position: relative;
   overflow: hidden;
+  outline: none; /* Quitamos outline nativo para usar uno personalizado */
 }
 
-.channel-card:hover { transform: scale(1.02); background: var(--bg-bento-hover); border-color: rgba(255,255,255,0.1); }
+.channel-card:hover, .channel-card:focus-visible { 
+  transform: scale(1.02); 
+  background: var(--bg-bento-hover); 
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
+}
 .channel-card.active { border-color: var(--accent-primary); background: rgba(0, 255, 170, 0.05); }
 
 .channel-card__logo, .channel-card__logo-placeholder {
