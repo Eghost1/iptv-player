@@ -51,7 +51,10 @@
             <p class="player-empty__desc">Tu emisión comenzará aquí</p>
           </div>
           <video id="video-player" class="video-player" controls playsinline></video>
-          <iframe id="iframe-player" class="video-player iframe-player" allowfullscreen style="display:none; width:100%; height:100%; border:none;"></iframe>
+          <iframe id="iframe-player" class="video-player iframe-player"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock"
+            style="display:none; width:100%; height:100%; border:none;"></iframe>
           <div class="player-error" id="player-error" style="display:none;">
             <div class="player-error__icon">📡</div>
             <h3 class="player-error__title">Transmisión Caída</h3>

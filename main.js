@@ -368,11 +368,93 @@ const CUSTOM_CHANNELS = [
     "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/ESPN3_logo.svg/1024px-ESPN3_logo.svg.png",
     "group": "Deportes"
   },
+  // ── StreamTP10 ─────────────────────────────────────────────────
+  // Canales 24/7 via iframe (player intermedio estable)
   {
-    "name": "Universo (Global)",
-    "url": "https://doc1.streameasthd.net/global/universo/index.m3u8?token=5992165a8f9ea33d750de6deeb6ffe9f3b227d8b-d2-1773310257-1773256257&ip=181.163.94.50",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Universo_logo.svg/1024px-Universo_logo.svg.png",
-    "group": "Deportes"
+    "name": "TNT Sports Argentina (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=tntsports",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/TNT_Sports_Chile.svg/1024px-TNT_Sports_Chile.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "ESPN Premium (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=espnpremiumarg",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/e/e0/ESPN_Premium_logo.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "TyC Sports (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=tyc",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Tyc_sports_logo_%282020%29.svg/1024px-Tyc_sports_logo_%282020%29.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "DSports (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=dsports",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/DSports.png/800px-DSports.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "Win Sports (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=winsports",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Win_Sports_Logo.svg/1024px-Win_Sports_Logo.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "Fox Sports (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=foxsports",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Fox_Sports_logo.svg/1024px-Fox_Sports_logo.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "Liga 1 MAX (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=liga1max",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Logo_de_L1_Max.svg/1024px-Logo_de_L1_Max.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "VTV Plus (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=vtvplus",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logotipo_de_VTV_Plus_%282021%29.svg/1024px-Logotipo_de_VTV_Plus_%282021%29.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  // ── StreamTP10 — Canales Extra (descubiertos en eventos.html)  ──
+  {
+    "name": "MAX 2 (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=max2",
+    "logo": "",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "MAX 3 (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=max3",
+    "logo": "",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  {
+    "name": "ESPN 5 (StreamTP10)",
+    "url": "https://streamtp10.com/global1.php?stream=espn5",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/ESPN_logo.svg/1024px-ESPN_logo.svg.png",
+    "group": "StreamTP10",
+    "iframe": true
+  },
+  // ── StreamTP10 — Eventos (página eventos.html) ──────────────────
+  {
+    "name": "Eventos EN VIVO (StreamTP10)",
+    "url": "https://streamtp10.com/eventos.html",
+    "logo": "",
+    "group": "StreamTP10",
+    "iframe": true
   }
 ];
 
@@ -492,18 +574,39 @@ function parseM3U(text, source) {
 // ============================================
 // Fetch Channels
 // ============================================
+const CORS_PROXIES = [
+  (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+
+async function fetchWithProxyFallback(url) {
+  const problematic = url.startsWith('http://') || url.includes('pastebin.com') || url.includes('m3u.cl') || url.includes('bit.ly');
+  if (!problematic) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.text();
+    } catch (_) {}
+  }
+  for (const makeProxy of CORS_PROXIES) {
+    try {
+      const res = await fetch(makeProxy(url));
+      if (res.ok) return await res.text();
+      console.warn('Proxy retorno ' + res.status + ':', makeProxy(url).split('?')[0]);
+    } catch (e) {
+      console.warn('Proxy fallo, intentando siguiente...');
+    }
+  }
+  return null;
+}
+
 async function fetchPlaylist(url, source) {
   if (!url) return [];
   try {
-    const isCorsProblematic = url.startsWith('http://') || url.includes('pastebin.com') || url.includes('m3u.cl') || url.includes('bit.ly');
-    const targetUrl = isCorsProblematic ? `https://corsproxy.io/?url=${encodeURIComponent(url)}` : url;
-
-    const res = await fetch(targetUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
+    const text = await fetchWithProxyFallback(url);
+    if (!text) throw new Error('Todos los proxies fallaron');
     return parseM3U(text, source);
   } catch (err) {
-    console.error(`Error fetching ${source}:`, err);
+    console.error('Error fetching ' + source + ':', err);
     return [];
   }
 }
@@ -832,75 +935,77 @@ function playChannel(channel) {
 
   if (url.includes('.m3u8') || url.includes('m3u8')) {
     if (Hls.isSupported()) {
+      // Intentamos cargar el stream directamente primero.
+      // Si falla por CORS (manifestLoadError), reintentamos via proxy CORS.
+      // NOTA: No enrutamos segmentos .ts por proxy — son archivos binarios pesados
+      // que los proxies gratuitos no soportan. El CDN del stream debe tener CORS abierto.
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        // Incrementamos el buffer para compensar pesos altísimos de segmentos en Max Quality
         maxBufferLength: 60,
         maxMaxBufferLength: 120,
-        // Prevenimos que Hls baje de calidad si el buffer se queda corto momentaneamente
         capLevelToPlayerSize: false,
-        abrEwmaDefaultEstimate: 5000000, // Partimos "asumiendo" una conexión veloz
-        // Interceptar cada petición de video (m3u8 o ts)
-        xhrSetup: function (xhr, internalUrl) {
-          console.log('[Depuración HLS] Solicitando recurso:', internalUrl);
-
-          // Opcional: Si un CDN bloquea por CORS, puedes intentar forzar el proxy también para los fragmentos (.ts)
-          // Nota: corsproxy.io bloquea archivos pesados de video a veces, usar con precaución.
-          if (internalUrl.includes('.ts') || internalUrl.includes('.m3u8')) {
-            internalUrl = 'https://corsproxy.io/?url=' + encodeURIComponent(internalUrl);
-          }
-
-        }
+        abrEwmaDefaultEstimate: 5000000,
+        // xhrSetup eliminado: reasignar el parametro string no tenia efecto en HLS.js
       });
       state.hls = hls;
+      state.hlsOriginalUrl = url;
+      state.hlsProxyAttempted = false;
       hls.loadSource(url);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-        console.log('[Depuración HLS] Manifiesto cargado exitosamente. Seleccionando la mayor calidad...');
-        
-        // Buscar el índice del nivel de mayor calidad (basado en bitrate o resolución)
+        console.log('[HLS] Manifiesto cargado. Niveles:', data.levels?.length);
         let maxQualityLevel = -1;
         let highestBitrate = 0;
-        
         if (data.levels && data.levels.length > 0) {
-           data.levels.forEach((level, index) => {
-              if (level.bitrate > highestBitrate) {
-                 highestBitrate = level.bitrate;
-                 maxQualityLevel = index;
-              }
-           });
+          data.levels.forEach((level, index) => {
+            if (level.bitrate > highestBitrate) {
+              highestBitrate = level.bitrate;
+              maxQualityLevel = index;
+            }
+          });
         }
-
-        // Forzar la calidad si encontramos múltiples niveles
-        if(maxQualityLevel > -1) {
-           console.log(`[Depuración HLS] Forzando nivel de calidad: ${maxQualityLevel} (Bitrate: ${Math.round(highestBitrate / 1000)}kbps)`);
-           hls.currentLevel = maxQualityLevel; // Deshabilita el auto-switch y fija esa calidad
+        if (maxQualityLevel > -1) {
+          console.log('[HLS] Calidad maxima: nivel ' + maxQualityLevel + ' (' + Math.round(highestBitrate / 1000) + 'kbps)');
+          hls.currentLevel = maxQualityLevel;
         }
-
-        video.play().catch(() => { });
+        video.play().catch(() => {});
       });
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('[Depuración HLS ERROR]', data.type, data.details, data);
-        if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            console.warn('[Depuración HLS] Error de red fatal, intentando recargar...', data.frag?.url);
-            hls.startLoad();
-          }
-          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            console.warn('[Depuración HLS] Error de medios fatal, intentando recuperar...');
-            hls.recoverMediaError();
-          }
-          else showPlayError();
+        if (!data.fatal) return;
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR && data.details === 'manifestLoadError' && !state.hlsProxyAttempted) {
+          // Primer fallo en el manifiesto: reintentar con proxy CORS
+          state.hlsProxyAttempted = true;
+          const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(state.hlsOriginalUrl)}`;
+          console.warn('[HLS] Fallo de red en manifiesto. Reintentando con proxy:', proxyUrl);
+          hls.destroy();
+          state.hls = null;
+          const hls2 = new Hls({ enableWorker: true, lowLatencyMode: true, maxBufferLength: 60, maxMaxBufferLength: 120 });
+          state.hls = hls2;
+          hls2.loadSource(proxyUrl);
+          hls2.attachMedia(video);
+          hls2.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+          hls2.on(Hls.Events.ERROR, (ev2, data2) => {
+            if (data2.fatal) {
+              console.error('[HLS] Fallo incluso con proxy. Stream posiblemente IP-locked o expirado.');
+              showPlayError();
+            }
+          });
+        } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          hls.startLoad();
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError();
+        } else {
+          showPlayError();
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = url;
-      video.play().catch(() => { });
+      video.play().catch(() => {});
     } else showPlayError();
   } else {
     video.src = url;
-    video.play().catch(() => { });
+    video.play().catch(() => {});
     video.onerror = () => showPlayError();
   }
 
