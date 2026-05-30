@@ -207,7 +207,7 @@ function renderCategoryPills() {
   let html = `<button class="category-pill ${state.currentFilter === 'all' ? 'active' : ''}" data-group="all">Todo</button>`;
   html += `<button class="category-pill ${state.currentFilter === 'favorites' ? 'active' : ''}" data-group="favorites">⭐ Favoritos</button>`;
 
-  const priorityGroups = ['Mis Canales', 'Deportes', 'RojaDirectaTV', 'LibreFutbolTV'];
+  const priorityGroups = ['Chile', 'Deportes Latam', 'Deportes', 'Noticias'];
 
   priorityGroups.forEach(g => {
     if (state.categories.includes(g)) {
@@ -216,7 +216,7 @@ function renderCategoryPills() {
   });
 
   state.categories.forEach(g => {
-    if (!priorityGroups.includes(g) && g.length < 25) {
+    if (!priorityGroups.includes(g) && g && g !== 'undefined') {
       html += `<button class="category-pill ${state.currentFilter === g ? 'active' : ''}" data-group="${g}">${g}</button>`;
     }
   });
